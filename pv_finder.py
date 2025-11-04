@@ -3,26 +3,45 @@ import pandas as pd
 from datetime import datetime
 import os
 
+# --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
 
+# --- CORES ---
+PEPSICO_BLUE = "#004C97"
+PEPSICO_LIGHT_BLUE = "#00A3E0"
+BACKGROUND_COLOR = "#F8FAFC"
+
+# --- CSS ---
+st.markdown(f"""
+<style>
+body {{ background-color: {BACKGROUND_COLOR}; }}
+.main-title {{ font-size: 40px; font-weight: bold; color: {PEPSICO_BLUE}; }}
+.subtitle {{ font-size: 18px; color: #555; }}
+.upload-box {{ background-color: #E8F1FA; padding: 15px; border-radius: 8px; margin-top: 10px; }}
+.stButton>button {{ background-color: {PEPSICO_LIGHT_BLUE}; color: white; font-weight: bold; border-radius: 8px; }}
+</style>
+""", unsafe_allow_html=True)
+
+# --- CABEÇALHO ---
+st.markdown('<div class="main-title">PV Finder <span style="font-size:18px; color:#004C97;">Packaging Specs</span></div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Type any fragment of PV number, description or notes. Update the base weekly via upload (Admin).</div>', unsafe_allow_html=True)
+st.write("---")
+
+# --- SIDEBAR ADMIN ---
+st.sidebar.header("Admin – Weekly Upload")
+pin_input = st.sidebar.text_input("Enter PIN", type="password")
 DEFAULT_FILE = "pv_specs.xlsx"
+uploaded_file = None
+df = None
 
 # --- Carrega base padrão ---
-df = None
 if os.path.exists(DEFAULT_FILE):
-    try:
-        df = pd.read_excel(DEFAULT_FILE, engine="openpyxl")
-        last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
-    except Exception as e:
-        st.error(f"Error loading default file: {e}")
-        df = None
+    df = pd.read_excel(DEFAULT_FILE, engine="openpyxl")
+    last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
 else:
     last_update = "No data loaded yet"
 
-# --- Sidebar Admin ---
-st.sidebar.header("Admin – Weekly Upload")
-pin_input = st.sidebar.text_input("Enter PIN", type="password")
-
+# --- Upload com PIN ---
 if pin_input == "130125":
     uploaded_file = st.sidebar.file_uploader("Upload official PV Spec Excel file", type=["xlsx"])
     if uploaded_file:
@@ -32,77 +51,105 @@ if pin_input == "130125":
         st.sidebar.success("✅ Base updated successfully!")
         last_update = datetime.now().strftime("%d-%m-%Y %H:%M")
 
+# --- INFO ---
 st.write(f"**Last updated:** {last_update}")
+st.markdown('<div class="upload-box">Upload the official Excel file to start. Only Admin can upload using PIN.</div>', unsafe_allow_html=True)
 
+# --- Se não houver dados, mostra aviso ---
 if df is None:
     st.warning("⚠️ No data loaded. Please upload the official file using PIN.")
     st.stop()
 
-# --- Global Search ---
+# --- BOTÕES ---
+col1, col2, col3 = st.columns([1,1,1])
+with col1: st.button("Reset")
+with col2: st.button("Save Defaults")
+with col3: st.button("Load Defaults")
+
+# --- GLOBAL SEARCH ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
 filtered_df = df.copy()
 if global_search:
     filtered_df = filtered_df[filtered_df.apply(lambda row: row.astype(str).str.contains(global_search, case=False).any(), axis=1)]
 
-# --- Filtros básicos ---
+# --- FILTROS BÁSICOS ---
 st.subheader("Basic column filters")
 col_filters = st.columns(8)
-
-def safe_multiselect(label, column):
-    if column in df.columns:
-        return st.multiselect(label, options=sorted(df[column].dropna().unique()))
-    return []
-
-def safe_text_input(label, column):
-    if column in df.columns:
-        return st.text_input(label)
-    return ""
-
 with col_filters[0]:
-    pv_text = safe_text_input("PVNumber contains", "PVNumber")
-    pv_select = safe_multiselect("PVNumber options", "PVNumber")
+    pv_text = st.text_input("PVNumber contains")
+    pv_select = st.multiselect("PVNumber options", options=sorted(df["PVNumber"].dropna().unique()))
 with col_filters[1]:
-    status_text = safe_text_input("PVStatus contains", "PVStatus")
-    status_select = safe_multiselect("PVStatus options", "PVStatus")
+    status_text = st.text_input("PVStatus contains")
+    status_select = st.multiselect("PVStatus options", options=sorted(df["PVStatus"].dropna().unique()))
 with col_filters[2]:
-    doc_text = safe_text_input("DocumentType contains", "DocumentType")
-    doc_select = safe_multiselect("DocumentType options", "DocumentType")
+    doc_text = st.text_input("DocumentType contains")
+    doc_select = st.multiselect("DocumentType options", options=sorted(df["DocumentType"].dropna().unique()))
 with col_filters[3]:
-    sales_text = safe_text_input("SalesClass contains", "SalesClass")
-    sales_select = safe_multiselect("SalesClass options", "SalesClass")
+    sales_text = st.text_input("SalesClass contains")
+    sales_select = st.multiselect("SalesClass options", options=sorted(df["SalesClass"].dropna().unique()))
 with col_filters[4]:
-    shape_text = safe_text_input("Shape contains", "Shape")
-    shape_select = safe_multiselect("Shape options", "Shape")
+    shape_text = st.text_input("Shape contains")
+    shape_select = st.multiselect("Shape options", options=sorted(df["Shape"].dropna().unique()))
 with col_filters[5]:
-    size_text = safe_text_input("Size contains", "Size")
-    size_select = safe_multiselect("Size options", "Size")
+    size_text = st.text_input("Size contains")
+    size_select = st.multiselect("Size options", options=sorted(df["Size"].dropna().unique()))
 with col_filters[6]:
-    count_text = safe_text_input("Count contains", "Count")
-    count_select = safe_multiselect("Count options", "Count")
+    count_text = st.text_input("Count contains")
+    count_select = st.multiselect("Count options", options=sorted(df["Count"].dropna().unique()))
 with col_filters[7]:
-    weight_text = safe_text_input("Weight contains", "Weight")
-    weight_select = safe_multiselect("Weight options", "Weight")
+    weight_text = st.text_input("Weight contains")
+    weight_select = st.multiselect("Weight options", options=sorted(df["Weight"].dropna().unique()))
 
-# --- Aplica filtros ---
-def apply_filter(column, text_value, select_values):
-    global filtered_df
-    if column in filtered_df.columns:
-        if text_value:
-            filtered_df = filtered_df[filtered_df[column].astype(str).str.contains(text_value, case=False, na=False)]
-        if select_values:
-            filtered_df = filtered_df[filtered_df[column].isin(select_values)]
+# --- APLICA FILTROS ---
+if pv_text:
+    filtered_df = filtered_df[filtered_df["PVNumber"].astype(str).str.contains(pv_text, case=False, na=False)]
+if pv_select:
+    filtered_df = filtered_df[filtered_df["PVNumber"].isin(pv_select)]
+if status_text:
+    filtered_df = filtered_df[filtered_df["PVStatus"].astype(str).str.contains(status_text, case=False, na=False)]
+if status_select:
+    filtered_df = filtered_df[filtered_df["PVStatus"].isin(status_select)]
+if doc_text:
+    filtered_df = filtered_df[filtered_df["DocumentType"].astype(str).str.contains(doc_text, case=False, na=False)]
+if doc_select:
+    filtered_df = filtered_df[filtered_df["DocumentType"].isin(doc_select)]
+if sales_text:
+    filtered_df = filtered_df[filtered_df["SalesClass"].astype(str).str.contains(sales_text, case=False, na=False)]
+if sales_select:
+    filtered_df = filtered_df[filtered_df["SalesClass"].isin(sales_select)]
+if shape_text:
+    filtered_df = filtered_df[filtered_df["Shape"].astype(str).str.contains(shape_text, case=False, na=False)]
+if shape_select:
+    filtered_df = filtered_df[filtered_df["Shape"].isin(shape_select)]
+if size_text:
+    filtered_df = filtered_df[filtered_df["Size"].astype(str).str.contains(size_text, case=False, na=False)]
+if size_select:
+    filtered_df = filtered_df[filtered_df["Size"].isin(size_select)]
+if count_text:
+    filtered_df = filtered_df[filtered_df["Count"].astype(str).str.contains(count_text, case=False, na=False)]
+if count_select:
+    filtered_df = filtered_df[filtered_df["Count"].isin(count_select)]
+if weight_text:
+    filtered_df = filtered_df[filtered_df["Weight"].astype(str).str.contains(weight_text, case=False, na=False)]
+if weight_select:
+    filtered_df = filtered_df[filtered_df["Weight"].isin(weight_select)]
 
-apply_filter("PVNumber", pv_text, pv_select)
-apply_filter("PVStatus", status_text, status_select)
-apply_filter("DocumentType", doc_text, doc_select)
-apply_filter("SalesClass", sales_text, sales_select)
-apply_filter("Shape", shape_text, shape_select)
-apply_filter("Size", size_text, size_select)
-apply_filter("Count", count_text, count_select)
-apply_filter("Weight", weight_text, weight_select)
+# --- FILTROS AVANÇADOS ---
+with st.expander("Advanced filters"):
+    min_code = st.number_input("Code Date min", min_value=0, value=0)
+    max_code = st.number_input("Code Date max", min_value=0, value=240)
+    only_latest = st.checkbox("Show only latest per PVNumber")
 
-# --- Resultados ---
+if min_code or max_code:
+    if "CodeDate" in filtered_df.columns:
+        filtered_df = filtered_df[(filtered_df["CodeDate"] >= min_code) & (filtered_df["CodeDate"] <= max_code)]
+
+if only_latest:
+    filtered_df = filtered_df.sort_values("CodeDate").drop_duplicates(subset=["PVNumber"], keep="last")
+
+# --- RESULTADOS ---
 st.subheader("📋 Filtered Results")
 st.dataframe(filtered_df)
 
+# --- DOWNLOAD ---
 st.download_button("Download Filtered Results", data=filtered_df.to_csv(index=False), file_name="filtered_pv_specs.csv", mime="text/csv")
