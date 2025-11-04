@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
 
 DEFAULT_FILE = "pv_specs.xlsx"
@@ -33,7 +32,6 @@ if pin_input == "130125":
         st.sidebar.success("✅ Base updated successfully!")
         last_update = datetime.now().strftime("%d-%m-%Y %H:%M")
 
-# --- Info ---
 st.write(f"**Last updated:** {last_update}")
 
 if df is None:
@@ -107,5 +105,4 @@ apply_filter("Weight", weight_text, weight_select)
 st.subheader("📋 Filtered Results")
 st.dataframe(filtered_df)
 
-# --- Download ---
 st.download_button("Download Filtered Results", data=filtered_df.to_csv(index=False), file_name="filtered_pv_specs.csv", mime="text/csv")
