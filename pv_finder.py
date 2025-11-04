@@ -11,8 +11,12 @@ DEFAULT_FILE = "pv_specs.xlsx"
 # --- Carrega base padrão ---
 df = None
 if os.path.exists(DEFAULT_FILE):
-    df = pd.read_excel(DEFAULT_FILE, engine="openpyxl")
-    last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
+    try:
+        df = pd.read_excel(DEFAULT_FILE, engine="openpyxl")
+        last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
+    except Exception as e:
+        st.error(f"Error loading default file: {e}")
+        df = None
 else:
     last_update = "No data loaded yet"
 
