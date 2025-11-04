@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import os
 
 # --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
@@ -12,13 +13,13 @@ BACKGROUND_COLOR = "#F8FAFC"
 
 # --- CSS ---
 st.markdown(f"""
-    <style>
-        body {{ background-color: {BACKGROUND_COLOR}; }}
-        .main-title {{ font-size: 40px; font-weight: bold; color: {PEPSICO_BLUE}; }}
-        .subtitle {{ font-size: 18px; color: #555; }}
-        .upload-box {{ background-color: #E8F1FA; padding: 15px; border-radius: 8px; margin-top: 10px; }}
-        .stButton>button {{ background-color: {PEPSICO_LIGHT_BLUE}; color: white; font-weight: bold; border-radius: 8px; }}
-    </style>
+<style>
+body {{ background-color: {BACKGROUND_COLOR}; }}
+.main-title {{ font-size: 40px; font-weight: bold; color: {PEPSICO_BLUE}; }}
+.subtitle {{ font-size: 18px; color: #555; }}
+.upload-box {{ background-color: #E8F1FA; padding: 15px; border-radius: 8px; margin-top: 10px; }}
+.stButton>button {{ background-color: {PEPSICO_LIGHT_BLUE}; color: white; font-weight: bold; border-radius: 8px; }}
+</style>
 """, unsafe_allow_html=True)
 
 # --- CABEÇALHO ---
@@ -29,17 +30,26 @@ st.write("---")
 # --- SIDEBAR ADMIN ---
 st.sidebar.header("Admin – Weekly Upload")
 pin_input = st.sidebar.text_input("Enter PIN", type="password")
+DEFAULT_FILE = "pv_specs.xlsx"
 uploaded_file = None
 df = None
 
+# --- Carrega base padrão ---
+if os.path.exists(DEFAULT_FILE):
+    df = pd.read_excel(DEFAULT_FILE, engine="openpyxl")
+    last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
+else:
+    last_update = "No data loaded yet"
+
+# --- Upload com PIN ---
 if pin_input == "130125":
     uploaded_file = st.sidebar.file_uploader("Upload official PV Spec Excel file", type=["xlsx"])
     if uploaded_file:
         df = pd.read_excel(uploaded_file, engine="openpyxl")
-        st.sidebar.success("✅ Base loaded successfully!")
+        with open(DEFAULT_FILE, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        st.sidebar.success("✅ Base updated successfully!")
         last_update = datetime.now().strftime("%d-%m-%Y %H:%M")
-else:
-    last_update = "No data loaded yet"
 
 # --- INFO ---
 st.write(f"**Last updated:** {last_update}")
@@ -47,7 +57,7 @@ st.markdown('<div class="upload-box">Upload the official Excel file to start. On
 
 # --- Se não houver dados, mostra aviso ---
 if df is None:
-    st.warning("⚠ No data loaded. Please upload the official file using PIN.")
+    st.warning("⚠️ No data loaded. Please upload the official file using PIN.")
     st.stop()
 
 # --- BOTÕES ---
@@ -62,7 +72,7 @@ filtered_df = df.copy()
 if global_search:
     filtered_df = filtered_df[filtered_df.apply(lambda row: row.astype(str).str.contains(global_search, case=False).any(), axis=1)]
 
-# --- FILTROS BÁSICOS COM TEXTO ---
+# --- FILTROS BÁSICOS ---
 st.subheader("Basic column filters")
 col_filters = st.columns(6)
 with col_filters[0]:
@@ -86,27 +96,27 @@ with col_filters[5]:
 
 # --- APLICA FILTROS ---
 if pv_text:
-    filtered_df = filtered_df[filtered_df["PVNumber"].str.contains(pv_text, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["PVNumber"].astype(str).str.contains(pv_text, case=False, na=False)]
 if pv_select:
     filtered_df = filtered_df[filtered_df["PVNumber"].isin(pv_select)]
 if status_text:
-    filtered_df = filtered_df[filtered_df["PVStatus"].str.contains(status_text, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["PVStatus"].astype(str).str.contains(status_text, case=False, na=False)]
 if status_select:
     filtered_df = filtered_df[filtered_df["PVStatus"].isin(status_select)]
 if doc_text:
-    filtered_df = filtered_df[filtered_df["DocumentType"].str.contains(doc_text, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["DocumentType"].astype(str).str.contains(doc_text, case=False, na=False)]
 if doc_select:
     filtered_df = filtered_df[filtered_df["DocumentType"].isin(doc_select)]
 if sales_text:
-    filtered_df = filtered_df[filtered_df["SalesClass"].str.contains(sales_text, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["SalesClass"].astype(str).str.contains(sales_text, case=False, na=False)]
 if sales_select:
     filtered_df = filtered_df[filtered_df["SalesClass"].isin(sales_select)]
 if shape_text:
-    filtered_df = filtered_df[filtered_df["Shape"].str.contains(shape_text, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["Shape"].astype(str).str.contains(shape_text, case=False, na=False)]
 if shape_select:
     filtered_df = filtered_df[filtered_df["Shape"].isin(shape_select)]
 if size_text:
-    filtered_df = filtered_df[filtered_df["Size"].str.contains(size_text, case=False, na=False)]
+    filtered_df = filtered_df[filtered_df["Size"].astype(str).str.contains(size_text, case=False, na=False)]
 if size_select:
     filtered_df = filtered_df[filtered_df["Size"].isin(size_select)]
 
@@ -116,12 +126,12 @@ with st.expander("Advanced filters"):
     max_code = st.number_input("Code Date max", min_value=0, value=240)
     only_latest = st.checkbox("Show only latest per PVNumber")
 
-    if min_code or max_code:
-        if "CodeDate" in filtered_df.columns:
-            filtered_df = filtered_df[(filtered_df["CodeDate"] >= min_code) & (filtered_df["CodeDate"] <= max_code)]
+if min_code or max_code:
+    if "CodeDate" in filtered_df.columns:
+        filtered_df = filtered_df[(filtered_df["CodeDate"] >= min_code) & (filtered_df["CodeDate"] <= max_code)]
 
-    if only_latest:
-        filtered_df = filtered_df.sort_values("CodeDate").drop_duplicates(subset=["PVNumber"], keep="last")
+if only_latest:
+    filtered_df = filtered_df.sort_values("CodeDate").drop_duplicates(subset=["PVNumber"], keep="last")
 
 # --- RESULTADOS ---
 st.subheader("📋 Filtered Results")
