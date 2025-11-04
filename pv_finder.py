@@ -49,64 +49,59 @@ if global_search:
 # --- Filtros básicos ---
 st.subheader("Basic column filters")
 col_filters = st.columns(8)
+
+def safe_multiselect(label, column):
+    if column in df.columns:
+        return st.multiselect(label, options=sorted(df[column].dropna().unique()))
+    return []
+
+def safe_text_input(label, column):
+    if column in df.columns:
+        return st.text_input(label)
+    return ""
+
 with col_filters[0]:
-    pv_text = st.text_input("PVNumber contains")
-    pv_select = st.multiselect("PVNumber options", options=sorted(df["PVNumber"].dropna().unique()))
+    pv_text = safe_text_input("PVNumber contains", "PVNumber")
+    pv_select = safe_multiselect("PVNumber options", "PVNumber")
 with col_filters[1]:
-    status_text = st.text_input("PVStatus contains")
-    status_select = st.multiselect("PVStatus options", options=sorted(df["PVStatus"].dropna().unique()))
+    status_text = safe_text_input("PVStatus contains", "PVStatus")
+    status_select = safe_multiselect("PVStatus options", "PVStatus")
 with col_filters[2]:
-    doc_text = st.text_input("DocumentType contains")
-    doc_select = st.multiselect("DocumentType options", options=sorted(df["DocumentType"].dropna().unique()))
+    doc_text = safe_text_input("DocumentType contains", "DocumentType")
+    doc_select = safe_multiselect("DocumentType options", "DocumentType")
 with col_filters[3]:
-    sales_text = st.text_input("SalesClass contains")
-    sales_select = st.multiselect("SalesClass options", options=sorted(df["SalesClass"].dropna().unique()))
+    sales_text = safe_text_input("SalesClass contains", "SalesClass")
+    sales_select = safe_multiselect("SalesClass options", "SalesClass")
 with col_filters[4]:
-    shape_text = st.text_input("Shape contains")
-    shape_select = st.multiselect("Shape options", options=sorted(df["Shape"].dropna().unique()))
+    shape_text = safe_text_input("Shape contains", "Shape")
+    shape_select = safe_multiselect("Shape options", "Shape")
 with col_filters[5]:
-    size_text = st.text_input("Size contains")
-    size_select = st.multiselect("Size options", options=sorted(df["Size"].dropna().unique()))
+    size_text = safe_text_input("Size contains", "Size")
+    size_select = safe_multiselect("Size options", "Size")
 with col_filters[6]:
-    count_text = st.text_input("Count contains")
-    count_select = st.multiselect("Count options", options=sorted(df["Count"].dropna().unique()))
+    count_text = safe_text_input("Count contains", "Count")
+    count_select = safe_multiselect("Count options", "Count")
 with col_filters[7]:
-    weight_text = st.text_input("Weight contains")
-    weight_select = st.multiselect("Weight options", options=sorted(df["Weight"].dropna().unique()))
+    weight_text = safe_text_input("Weight contains", "Weight")
+    weight_select = safe_multiselect("Weight options", "Weight")
 
 # --- Aplica filtros ---
-if pv_text:
-    filtered_df = filtered_df[filtered_df["PVNumber"].astype(str).str.contains(pv_text, case=False, na=False)]
-if pv_select:
-    filtered_df = filtered_df[filtered_df["PVNumber"].isin(pv_select)]
-if status_text:
-    filtered_df = filtered_df[filtered_df["PVStatus"].astype(str).str.contains(status_text, case=False, na=False)]
-if status_select:
-    filtered_df = filtered_df[filtered_df["PVStatus"].isin(status_select)]
-if doc_text:
-    filtered_df = filtered_df[filtered_df["DocumentType"].astype(str).str.contains(doc_text, case=False, na=False)]
-if doc_select:
-    filtered_df = filtered_df[filtered_df["DocumentType"].isin(doc_select)]
-if sales_text:
-    filtered_df = filtered_df[filtered_df["SalesClass"].astype(str).str.contains(sales_text, case=False, na=False)]
-if sales_select:
-    filtered_df = filtered_df[filtered_df["SalesClass"].isin(sales_select)]
-if shape_text:
-    filtered_df = filtered_df[filtered_df["Shape"].astype(str).str.contains(shape_text, case=False, na=False)]
-if shape_select:
-    filtered_df = filtered_df[filtered_df["Shape"].isin(shape_select)]
-if size_text:
-    filtered_df = filtered_df[filtered_df["Size"].astype(str).str.contains(size_text, case=False, na=False)]
-if size_select:
-    filtered_df = filtered_df[filtered_df["Size"].isin(size_select)]
-if count_text:
-    filtered_df = filtered_df[filtered_df["Count"].astype(str).str.contains(count_text, case=False, na=False)]
-if count_select:
-    filtered_df = filtered_df[filtered_df["Count"].isin(count_select)]
-if weight_text:
-    filtered_df = filtered_df[filtered_df["Weight"].astype(str).str.contains(weight_text, case=False, na=False)]
-if weight_select:
-    filtered_df = filtered_df[filtered_df["Weight"].isin(weight_select)]
+def apply_filter(column, text_value, select_values):
+    global filtered_df
+    if column in filtered_df.columns:
+        if text_value:
+            filtered_df = filtered_df[filtered_df[column].astype(str).str.contains(text_value, case=False, na=False)]
+        if select_values:
+            filtered_df = filtered_df[filtered_df[column].isin(select_values)]
+
+apply_filter("PVNumber", pv_text, pv_select)
+apply_filter("PVStatus", status_text, status_select)
+apply_filter("DocumentType", doc_text, doc_select)
+apply_filter("SalesClass", sales_text, sales_select)
+apply_filter("Shape", shape_text, shape_select)
+apply_filter("Size", size_text, size_select)
+apply_filter("Count", count_text, count_select)
+apply_filter("Weight", weight_text, weight_select)
 
 # --- Resultados ---
 st.subheader("📋 Filtered Results")
