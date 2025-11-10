@@ -58,7 +58,7 @@ if df is None:
 if st.button("🔄 Reset All Filters"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.experimental_rerun()
+    st.rerun()  # ✅ Corrigido para usar st.rerun()
 
 # --- Global Search (otimizado) ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
