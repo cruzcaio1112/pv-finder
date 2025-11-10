@@ -62,19 +62,18 @@ if df is None:
 if st.button("🔄 Reset All Filters"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.rerun()  # ✅ Corrigido para usar st.rerun()
+    st.rerun()
 
 # --- Global Search (otimizado) ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
 filtered_df = df.copy()
 if global_search:
-    # Busca vetorizada (mais rápida que apply linha a linha)
     mask = filtered_df.astype(str).apply(lambda col: col.str.contains(global_search, case=False, na=False))
     filtered_df = filtered_df[mask.any(axis=1)]
 
 # --- FILTROS BÁSICOS ---
 st.subheader("Basic column filters")
-col_filters = st.columns(8)
+col_filters = st.columns(12)  # aumentamos para caber mais filtros
 
 def filtro_texto(label, key):
     return st.text_input(label, value=st.session_state.get(key, ""), key=key)
@@ -106,6 +105,18 @@ with col_filters[6]:
 with col_filters[7]:
     weight_text = filtro_texto("Weight contains", "weight_text")
     weight_select = filtro_multiselect("Weight options", "weight_select", sorted(df["Weight"].dropna().astype(str).unique()))
+with col_filters[8]:
+    note_text = filtro_texto("NoteForMarketing contains", "note_text")
+    note_select = filtro_multiselect("NoteForMarketing options", "note_select", sorted(df["NoteForMarketing"].dropna().astype(str).unique()))
+with col_filters[9]:
+    case_text = filtro_texto("CaseTypeSpecification contains", "case_text")
+    case_select = filtro_multiselect("CaseTypeSpecification options", "case_select", sorted(df["CaseTypeSpecification"].dropna().astype(str).unique()))
+with col_filters[10]:
+    name_text = filtro_texto("Name contains", "name_text")
+    name_select = filtro_multiselect("Name options", "name_select", sorted(df["Name"].dropna().astype(str).unique()))
+with col_filters[11]:
+    pack_text = filtro_texto("AllPacks contains", "pack_text")
+    pack_select = filtro_multiselect("AllPacks options", "pack_select", sorted(df["AllPacks"].dropna().astype(str).unique()))
 
 # --- APLICA FILTROS ---
 def apply_filter(column, text_value, select_values):
@@ -124,6 +135,10 @@ apply_filter("Shape", shape_text, shape_select)
 apply_filter("Size", size_text, size_select)
 apply_filter("Count", count_text, count_select)
 apply_filter("Weight", weight_text, weight_select)
+apply_filter("NoteForMarketing", note_text, note_select)
+apply_filter("CaseTypeSpecification", case_text, case_select)
+apply_filter("Name", name_text, name_select)
+apply_filter("AllPacks", pack_text, pack_select)
 
 # --- RESULTADOS ---
 st.subheader("📋 Filtered Results")
