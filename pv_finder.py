@@ -64,7 +64,7 @@ if st.button("🔄 Reset All Filters"):
         del st.session_state[key]
     st.rerun()
 
-# --- Global Search (otimizado) ---
+# --- Global Search ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
 filtered_df = df.copy()
 if global_search:
@@ -73,50 +73,40 @@ if global_search:
 
 # --- FILTROS BÁSICOS ---
 st.subheader("Basic column filters")
-col_filters = st.columns(12)  # aumentamos para caber mais filtros
 
+# Funções para filtros
 def filtro_texto(label, key):
     return st.text_input(label, value=st.session_state.get(key, ""), key=key)
 
 def filtro_multiselect(label, key, opcoes):
     return st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
 
-with col_filters[0]:
-    pv_text = filtro_texto("PVNumber contains", "pv_text")
-    pv_select = filtro_multiselect("PVNumber options", "pv_select", sorted(df["PVNumber"].dropna().astype(str).unique()))
-with col_filters[1]:
-    status_text = filtro_texto("PVStatus contains", "status_text")
-    status_select = filtro_multiselect("PVStatus options", "status_select", sorted(df["PVStatus"].dropna().astype(str).unique()))
-with col_filters[2]:
-    doc_text = filtro_texto("DocumentType contains", "doc_text")
-    doc_select = filtro_multiselect("DocumentType options", "doc_select", sorted(df["DocumentType"].dropna().astype(str).unique()))
-with col_filters[3]:
-    sales_text = filtro_texto("SalesClass contains", "sales_text")
-    sales_select = filtro_multiselect("SalesClass options", "sales_select", sorted(df["SalesClass"].dropna().astype(str).unique()))
-with col_filters[4]:
-    shape_text = filtro_texto("Shape contains", "shape_text")
-    shape_select = filtro_multiselect("Shape options", "shape_select", sorted(df["Shape"].dropna().astype(str).unique()))
-with col_filters[5]:
-    size_text = filtro_texto("Size contains", "size_text")
-    size_select = filtro_multiselect("Size options", "size_select", sorted(df["Size"].dropna().astype(str).unique()))
-with col_filters[6]:
-    count_text = filtro_texto("Count contains", "count_text")
-    count_select = filtro_multiselect("Count options", "count_select", sorted(df["Count"].dropna().astype(str).unique()))
-with col_filters[7]:
-    weight_text = filtro_texto("Weight contains", "weight_text")
-    weight_select = filtro_multiselect("Weight options", "weight_select", sorted(df["Weight"].dropna().astype(str).unique()))
-with col_filters[8]:
-    note_text = filtro_texto("NoteForMarketing contains", "note_text")
-    note_select = filtro_multiselect("NoteForMarketing options", "note_select", sorted(df["NoteForMarketing"].dropna().astype(str).unique()))
-with col_filters[9]:
-    case_text = filtro_texto("CaseTypeSpecification contains", "case_text")
-    case_select = filtro_multiselect("CaseTypeSpecification options", "case_select", sorted(df["CaseTypeSpecification"].dropna().astype(str).unique()))
-with col_filters[10]:
-    name_text = filtro_texto("Name contains", "name_text")
-    name_select = filtro_multiselect("Name options", "name_select", sorted(df["Name"].dropna().astype(str).unique()))
-with col_filters[11]:
-    pack_text = filtro_texto("AllPacks contains", "pack_text")
-    pack_select = filtro_multiselect("AllPacks options", "pack_select", sorted(df["AllPacks"].dropna().astype(str).unique()))
+# Lista de colunas na ordem
+columns_list = [
+    "PVNumber", "PVStatus", "Count", "Weight", "Description", "DocumentType",
+    "NoteForMarketing", "CaseTypeDescriptor", "AirFillDescriptor", "CodeDate",
+    "SalesClass", "Size", "Shape", "CasesPerLayer(TI)", "HI(Layers/Pallet)",
+    "TotalNumberOfCasesPerPallet", "BagsOrTraysPerLayer"
+]
+
+# Criar filtros dinamicamente
+filters_text = {}
+filters_select = {}
+
+# Organizar em duas linhas
+cols_row1 = st.columns(8)
+cols_row2 = st.columns(9)
+
+for i, col in enumerate(columns_list):
+    if col in df.columns:
+        target_col = cols_row1[i] if i < 8 else cols_row2[i - 8]
+        with target_col:
+            text_key = f"{col}_text"
+            select_key = f"{col}_select"
+            filters_text[col] = filtro_texto(f"{col} contains", text_key)
+            filters_select[col] = filtro_multiselect(f"{col} options", select_key, sorted(df[col].dropna().astype(str).unique()))
+    else:
+        filters_text[col], filters_select[col] = "", []
 
 # --- APLICA FILTROS ---
 def apply_filter(column, text_value, select_values):
@@ -127,18 +117,8 @@ def apply_filter(column, text_value, select_values):
         if select_values:
             filtered_df = filtered_df[filtered_df[column].astype(str).isin(select_values)]
 
-apply_filter("PVNumber", pv_text, pv_select)
-apply_filter("PVStatus", status_text, status_select)
-apply_filter("DocumentType", doc_text, doc_select)
-apply_filter("SalesClass", sales_text, sales_select)
-apply_filter("Shape", shape_text, shape_select)
-apply_filter("Size", size_text, size_select)
-apply_filter("Count", count_text, count_select)
-apply_filter("Weight", weight_text, weight_select)
-apply_filter("NoteForMarketing", note_text, note_select)
-apply_filter("CaseTypeSpecification", case_text, case_select)
-apply_filter("Name", name_text, name_select)
-apply_filter("AllPacks", pack_text, pack_select)
+for col in columns_list:
+    apply_filter(col, filters_text[col], filters_select[col])
 
 # --- RESULTADOS ---
 st.subheader("📋 Filtered Results")
