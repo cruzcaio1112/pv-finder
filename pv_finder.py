@@ -60,9 +60,8 @@ if df is None:
 
 # --- Botão de Reset ---
 if st.button("🔄 Reset All Filters"):
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.rerun()
+    st.session_state.clear()  # ✅ Limpa tudo
+    st.rerun()  # ✅ Recarrega a página
 
 # --- Global Search ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
@@ -81,10 +80,10 @@ def filtro_texto(label, key):
 def filtro_multiselect(label, key, opcoes):
     return st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
 
-# Lista final (sem PVNumber, CasesPerLayer(TI), HI(Layers/Pallet), CodeDate)
+# Lista de colunas (sem PVNumber, CasesPerLayer(TI), HI(Layers/Pallet))
 columns_list = [
     "PVStatus", "Count", "Weight", "Description", "DocumentType",
-    "NoteForMarketing", "CaseTypeDescriptor", "AirFillDescriptor",
+    "NoteForMarketing", "CaseTypeDescriptor", "AirFillDescriptor", "CodeDate",
     "SalesClass", "Size", "Shape", "TotalNumberOfCasesPerPallet", "BagsOrTraysPerLayer"
 ]
 
@@ -97,14 +96,14 @@ cols_row1 = st.columns(8)
 cols_row2 = st.columns(6)
 
 for i, col in enumerate(columns_list):
-    if col in filtered_df.columns:  # ✅ Agora usamos filtered_df
+    if col in df.columns:
         target_col = cols_row1[i] if i < 8 else cols_row2[i - 8]
         with target_col:
             with st.container():  # ✅ Agrupa os dois filtros para alinhamento
                 text_key = f"{col}_text"
                 select_key = f"{col}_select"
                 filters_text[col] = filtro_texto(f"{col} contains", text_key)
-                filters_select[col] = filtro_multiselect(f"{col} options", select_key, sorted(filtered_df[col].dropna().astype(str).unique()))
+                filters_select[col] = filtro_multiselect(f"{col} options", select_key, sorted(df[col].dropna().astype(str).unique()))
     else:
         filters_text[col], filters_select[col] = "", []
 
