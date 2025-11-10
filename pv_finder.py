@@ -6,6 +6,10 @@ import os
 # --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
 
+# --- Título do App ---
+st.title("📦 PV Finder – PepsiCo Packaging Specs")
+st.markdown("Use the filters below to quickly find PV specifications for packaging.")
+
 DEFAULT_FILE = "pv_specs.xlsx"
 
 # --- Cache para carregar base ---
