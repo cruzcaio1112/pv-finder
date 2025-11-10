@@ -97,10 +97,10 @@ def filtro_texto(label, key):
 def filtro_multiselect(label, key, opcoes):
     return st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
 
-# Lista de colunas (sem PVNumber, CasesPerLayer(TI), HI(Layers/Pallet))
+# Lista de colunas (removidos CodeDate e DocumentType)
 columns_list = [
-    "PVStatus", "Count", "Weight", "Description", "DocumentType",
-    "NoteForMarketing", "CaseTypeDescriptor", "AirFillDescriptor", "CodeDate",
+    "PVStatus", "Count", "Weight", "Description",
+    "NoteForMarketing", "CaseTypeDescriptor", "AirFillDescriptor",
     "SalesClass", "Size", "Shape", "TotalNumberOfCasesPerPallet", "BagsOrTraysPerLayer"
 ]
 
@@ -109,12 +109,12 @@ filters_text = {}
 filters_select = {}
 
 # Organizar em duas linhas
-cols_row1 = st.columns(8)
+cols_row1 = st.columns(6)
 cols_row2 = st.columns(6)
 
 for i, col in enumerate(columns_list):
     if col in filtered_df.columns:  # ✅ Usa filtered_df para opções dinâmicas
-        target_col = cols_row1[i] if i < 8 else cols_row2[i - 8]
+        target_col = cols_row1[i] if i < 6 else cols_row2[i - 6]
         with target_col:
             with st.container():  # ✅ Agrupa os dois filtros para alinhamento
                 text_key = f"{col}_text"
