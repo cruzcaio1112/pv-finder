@@ -8,19 +8,25 @@ st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
 
 DEFAULT_FILE = "pv_specs.xlsx"
 
-# --- Função para carregar Excel ---
+# --- Cache para carregar base ---
+@st.cache_data
 def load_excel(file_path):
-    try:
-        return pd.read_excel(file_path, engine="openpyxl")
-    except Exception as e:
-        st.error(f"⚠️ Error loading file: {e}. Please upload a valid .xlsx file.")
-        return None
+    return pd.read_excel(file_path, engine="openpyxl")
+
+# --- Função para salvar arquivo ---
+def save_uploaded_file(uploaded_file):
+    with open(DEFAULT_FILE, "wb") as f:
+        f.write(uploaded_file.getbuffer())
 
 # --- Carrega base padrão ---
 df = None
 if os.path.exists(DEFAULT_FILE):
-    df = load_excel(DEFAULT_FILE)
-    last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
+    try:
+        df = load_excel(DEFAULT_FILE)
+        last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
+    except Exception as e:
+        st.error(f"⚠️ Error loading default file: {e}. Please upload a valid .xlsx file.")
+        df = None
 else:
     last_update = "No data loaded yet"
 
@@ -31,13 +37,10 @@ pin_input = st.sidebar.text_input("Enter PIN", type="password")
 if pin_input == "130125":
     uploaded_file = st.sidebar.file_uploader("Upload official PV Spec Excel file", type=["xlsx"])
     if uploaded_file:
-        # Valida extensão
         if uploaded_file.name.endswith(".xlsx"):
             try:
                 df = pd.read_excel(uploaded_file, engine="openpyxl")
-                # Salva corretamente no servidor
-                with open(DEFAULT_FILE, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+                save_uploaded_file(uploaded_file)
                 st.sidebar.success("✅ Base updated successfully!")
                 last_update = datetime.now().strftime("%d-%m-%Y %H:%M")
             except Exception as e:
@@ -57,11 +60,13 @@ if st.button("🔄 Reset All Filters"):
         del st.session_state[key]
     st.experimental_rerun()
 
-# --- Global Search ---
+# --- Global Search (otimizado) ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
 filtered_df = df.copy()
 if global_search:
-    filtered_df = filtered_df[filtered_df.apply(lambda row: row.astype(str).str.contains(global_search, case=False).any(), axis=1)]
+    # Busca vetorizada (mais rápida que apply linha a linha)
+    mask = filtered_df.astype(str).apply(lambda col: col.str.contains(global_search, case=False, na=False))
+    filtered_df = filtered_df[mask.any(axis=1)]
 
 # --- FILTROS BÁSICOS ---
 st.subheader("Basic column filters")
