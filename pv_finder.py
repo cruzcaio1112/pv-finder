@@ -39,6 +39,12 @@ if df is None:
     st.warning("⚠️ No data loaded. Please upload the official file using PIN.")
     st.stop()
 
+# --- Botão de Reset ---
+if st.button("🔄 Reset All Filters"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()
+
 # --- Global Search ---
 global_search = st.text_input("🔍 Global search (fragment across ALL columns)", placeholder="e.g., Doritos, C2, X-Dock, P000...")
 filtered_df = df.copy()
@@ -49,30 +55,40 @@ if global_search:
 st.subheader("Basic column filters")
 col_filters = st.columns(8)
 
+def filtro_texto(label, key):
+    valor = st.text_input(label, value=st.session_state.get(key, ""), key=key)
+    st.session_state[key] = valor
+    return valor
+
+def filtro_multiselect(label, key, opcoes):
+    valor = st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
+    st.session_state[key] = valor
+    return valor
+
 with col_filters[0]:
-    pv_text = st.text_input("PVNumber contains")
-    pv_select = st.multiselect("PVNumber options", options=sorted(df["PVNumber"].dropna().astype(str).unique()))
+    pv_text = filtro_texto("PVNumber contains", "pv_text")
+    pv_select = filtro_multiselect("PVNumber options", "pv_select", sorted(df["PVNumber"].dropna().astype(str).unique()))
 with col_filters[1]:
-    status_text = st.text_input("PVStatus contains")
-    status_select = st.multiselect("PVStatus options", options=sorted(df["PVStatus"].dropna().astype(str).unique()))
+    status_text = filtro_texto("PVStatus contains", "status_text")
+    status_select = filtro_multiselect("PVStatus options", "status_select", sorted(df["PVStatus"].dropna().astype(str).unique()))
 with col_filters[2]:
-    doc_text = st.text_input("DocumentType contains")
-    doc_select = st.multiselect("DocumentType options", options=sorted(df["DocumentType"].dropna().astype(str).unique()))
+    doc_text = filtro_texto("DocumentType contains", "doc_text")
+    doc_select = filtro_multiselect("DocumentType options", "doc_select", sorted(df["DocumentType"].dropna().astype(str).unique()))
 with col_filters[3]:
-    sales_text = st.text_input("SalesClass contains")
-    sales_select = st.multiselect("SalesClass options", options=sorted(df["SalesClass"].dropna().astype(str).unique()))
+    sales_text = filtro_texto("SalesClass contains", "sales_text")
+    sales_select = filtro_multiselect("SalesClass options", "sales_select", sorted(df["SalesClass"].dropna().astype(str).unique()))
 with col_filters[4]:
-    shape_text = st.text_input("Shape contains")
-    shape_select = st.multiselect("Shape options", options=sorted(df["Shape"].dropna().astype(str).unique()))
+    shape_text = filtro_texto("Shape contains", "shape_text")
+    shape_select = filtro_multiselect("Shape options", "shape_select", sorted(df["Shape"].dropna().astype(str).unique()))
 with col_filters[5]:
-    size_text = st.text_input("Size contains")
-    size_select = st.multiselect("Size options", options=sorted(df["Size"].dropna().astype(str).unique()))
+    size_text = filtro_texto("Size contains", "size_text")
+    size_select = filtro_multiselect("Size options", "size_select", sorted(df["Size"].dropna().astype(str).unique()))
 with col_filters[6]:
-    count_text = st.text_input("Count contains")
-    count_select = st.multiselect("Count options", options=sorted(df["Count"].dropna().astype(str).unique()))
+    count_text = filtro_texto("Count contains", "count_text")
+    count_select = filtro_multiselect("Count options", "count_select", sorted(df["Count"].dropna().astype(str).unique()))
 with col_filters[7]:
-    weight_text = st.text_input("Weight contains")
-    weight_select = st.multiselect("Weight options", options=sorted(df["Weight"].dropna().astype(str).unique()))
+    weight_text = filtro_texto("Weight contains", "weight_text")
+    weight_select = filtro_multiselect("Weight options", "weight_select", sorted(df["Weight"].dropna().astype(str).unique()))
 
 # --- APLICA FILTROS ---
 def apply_filter(column, text_value, select_values):
