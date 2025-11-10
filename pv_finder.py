@@ -96,14 +96,18 @@ cols_row1 = st.columns(8)
 cols_row2 = st.columns(6)
 
 for i, col in enumerate(columns_list):
-    if col in df.columns:
+    if col in filtered_df.columns:  # ✅ Usa filtered_df para opções dinâmicas
         target_col = cols_row1[i] if i < 8 else cols_row2[i - 8]
         with target_col:
             with st.container():  # ✅ Agrupa os dois filtros para alinhamento
                 text_key = f"{col}_text"
                 select_key = f"{col}_select"
                 filters_text[col] = filtro_texto(f"{col} contains", text_key)
-                filters_select[col] = filtro_multiselect(f"{col} options", select_key, sorted(df[col].dropna().astype(str).unique()))
+                filters_select[col] = filtro_multiselect(
+                    f"{col} options",
+                    select_key,
+                    sorted(filtered_df[col].dropna().astype(str).unique())  # ✅ Opções dinâmicas
+                )
     else:
         filters_text[col], filters_select[col] = "", []
 
