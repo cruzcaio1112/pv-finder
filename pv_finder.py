@@ -81,12 +81,11 @@ def filtro_texto(label, key):
 def filtro_multiselect(label, key, opcoes):
     return st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
 
-# Lista de colunas na ordem
+# Lista de colunas (sem PVNumber, CasesPerLayer(TI), HI(Layers/Pallet))
 columns_list = [
-    "PVNumber", "PVStatus", "Count", "Weight", "Description", "DocumentType",
+    "PVStatus", "Count", "Weight", "Description", "DocumentType",
     "NoteForMarketing", "CaseTypeDescriptor", "AirFillDescriptor", "CodeDate",
-    "SalesClass", "Size", "Shape", "CasesPerLayer(TI)", "HI(Layers/Pallet)",
-    "TotalNumberOfCasesPerPallet", "BagsOrTraysPerLayer"
+    "SalesClass", "Size", "Shape", "TotalNumberOfCasesPerPallet", "BagsOrTraysPerLayer"
 ]
 
 # Criar filtros dinamicamente
@@ -95,7 +94,7 @@ filters_select = {}
 
 # Organizar em duas linhas
 cols_row1 = st.columns(8)
-cols_row2 = st.columns(9)
+cols_row2 = st.columns(7)
 
 for i, col in enumerate(columns_list):
     if col in df.columns:
