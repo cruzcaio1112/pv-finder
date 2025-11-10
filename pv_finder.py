@@ -8,15 +8,19 @@ st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
 
 DEFAULT_FILE = "pv_specs.xlsx"
 
+# --- Função para carregar Excel ---
+def load_excel(file_path):
+    try:
+        return pd.read_excel(file_path, engine="openpyxl")
+    except Exception as e:
+        st.error(f"⚠️ Error loading file: {e}. Please upload a valid .xlsx file.")
+        return None
+
 # --- Carrega base padrão ---
 df = None
 if os.path.exists(DEFAULT_FILE):
-    try:
-        df = pd.read_excel(DEFAULT_FILE, engine="openpyxl")
-        last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
-    except Exception as e:
-        st.error(f"Error loading default file: {e}")
-        df = None
+    df = load_excel(DEFAULT_FILE)
+    last_update = datetime.fromtimestamp(os.path.getmtime(DEFAULT_FILE)).strftime("%d-%m-%Y %H:%M")
 else:
     last_update = "No data loaded yet"
 
@@ -27,11 +31,19 @@ pin_input = st.sidebar.text_input("Enter PIN", type="password")
 if pin_input == "130125":
     uploaded_file = st.sidebar.file_uploader("Upload official PV Spec Excel file", type=["xlsx"])
     if uploaded_file:
-        df = pd.read_excel(uploaded_file, engine="openpyxl")
-        with open(DEFAULT_FILE, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.sidebar.success("✅ Base updated successfully!")
-        last_update = datetime.now().strftime("%d-%m-%Y %H:%M")
+        # Valida extensão
+        if uploaded_file.name.endswith(".xlsx"):
+            try:
+                df = pd.read_excel(uploaded_file, engine="openpyxl")
+                # Salva corretamente no servidor
+                with open(DEFAULT_FILE, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                st.sidebar.success("✅ Base updated successfully!")
+                last_update = datetime.now().strftime("%d-%m-%Y %H:%M")
+            except Exception as e:
+                st.sidebar.error(f"Upload failed: {e}")
+        else:
+            st.sidebar.error("Invalid file format. Please upload a .xlsx file.")
 
 st.write(f"**Last updated:** {last_update}")
 
