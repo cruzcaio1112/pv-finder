@@ -56,14 +56,10 @@ st.subheader("Basic column filters")
 col_filters = st.columns(8)
 
 def filtro_texto(label, key):
-    valor = st.text_input(label, value=st.session_state.get(key, ""), key=key)
-    st.session_state[key] = valor
-    return valor
+    return st.text_input(label, value=st.session_state.get(key, ""), key=key)
 
 def filtro_multiselect(label, key, opcoes):
-    valor = st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
-    st.session_state[key] = valor
-    return valor
+    return st.multiselect(label, options=opcoes, default=st.session_state.get(key, []), key=key)
 
 with col_filters[0]:
     pv_text = filtro_texto("PVNumber contains", "pv_text")
