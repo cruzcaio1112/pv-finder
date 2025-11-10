@@ -6,6 +6,23 @@ import os
 # --- CONFIGURAÇÃO ---
 st.set_page_config(page_title="PV Finder", layout="wide", page_icon="📦")
 
+# --- CSS para alinhamento e espaçamento ---
+st.markdown("""
+<style>
+div[data-testid="column"] {
+    min-height: 150px;
+    padding-bottom: 10px;
+}
+div[data-testid="stTextInput"] input {
+    font-size: 14px;
+}
+div[data-testid="stMultiSelect"] div[role="listbox"] {
+    max-height: 200px;
+    overflow-y: auto;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Título do App ---
 st.title("📦 PV Finder – PepsiCo Packaging Specs")
 st.markdown("Use the filters below to quickly find PV specifications for packaging.")
